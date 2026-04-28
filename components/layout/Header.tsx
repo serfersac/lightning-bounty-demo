@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguagePicker } from "@/components/LanguagePicker";
+import PomodoroTimer from "@/components/PomodoroTimer";
 import { clearSession } from "@/lib/auth/session";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
@@ -47,6 +48,7 @@ export function Header() {
         </nav>
       </div>
       <div className="flex items-center gap-2">
+        <PomodoroTimer />
         <LanguagePicker />
         <ThemeToggle />
         <Button
