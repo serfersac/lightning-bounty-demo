@@ -71,3 +71,95 @@ export function projectsToCSV(projects: Project[]): string {
 
   return lines.join("\n");
 }
+
+function parseCsvRow(line: string): string[] {
+    const values: string[] = [];
+    let current_value = '';
+    let in_quotes = false;
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+            if (in_quotes && i + 1 < line.length && line[i + 1] === '"') {
+                current_value += '"';
+                i++;
+            } else {
+                in_quotes = !in_quotes;
+            }
+        } else if (char === ',' && !in_quotes) {
+            values.push(current_value);
+            current_value = '';
+        } else {
+            current_value += char;
+        }
+    }
+    values.push(current_value);
+    return values;
+}
+
+export function csvToTasks(
+  csv: string,
+  projects: Project[],
+  existingTasks: Task[]
+): {
+  tasks: Omit<Task, "id" | "createdAt" | "updatedAt">[];
+  malformedRows: number[];
+} {
+  const projectMap = new Map(projects.map((p) => [p.name, p.id]));
+  const existingTaskTitles = new Set(
+    existingTasks.map((t) => `${t.projectId}:${t.title}`)
+  );
+
+  // Remove BOM
+  if (csv.charCodeAt(0) === 0xFEFF) {
+    csv = csv.substring(1);
+  }
+  
+  const lines = csv.split(/\r?\n/);
+  const headers = parseCsvRow(lines[0]).map((h) => h.trim());
+  const tasks: Omit<Task, "id" | "createdAt" | "updatedAt">[] = [];
+  const malformedRows: number[] = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.trim() === "") continue;
+
+    const values = parseCsvRow(line);
+    const rowData: { [key: string]: string } = {};
+    for (let j = 0; j < headers.length; j++) {
+      rowData[headers[j]] = values[j];
+    }
+
+    const projectName = rowData["project"];
+    const projectId = projectMap.get(projectName);
+    if (!projectId) {
+      malformedRows.push(i + 1);
+      continue;
+    }
+
+    const title = rowData["title"];
+    if (!title || existingTaskTitles.has(`${projectId}:${title}`)) {
+      continue;
+    }
+
+    try {
+      tasks.push({
+        projectId,
+        title,
+        description: rowData["description"] ?? "",
+        status: rowData["status"] ?? "backlog",
+        priority: rowData["priority"] ?? "none",
+        assignee: rowData["assignee"] ?? "",
+        tags: (rowData["tags"] ?? "")
+          .split(";")
+          .filter(name => name)
+          .map((name) => ({ id: "", name, color: "" })),
+        dueDate: rowData["dueDate"] || null,
+      });
+      existingTaskTitles.add(`${projectId}:${title}`); // Add to set to handle duplicates within the CSV
+    } catch (e) {
+      malformedRows.push(i + 1);
+    }
+  }
+
+  return { tasks, malformedRows };
+}

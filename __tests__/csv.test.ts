@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { tasksToCSV, projectsToCSV } from "@/lib/csv";
+import { tasksToCSV, projectsToCSV, csvToTasks } from "@/lib/csv";
 import type { Task, Project } from "@/lib/types";
 
 const projects: Project[] = [
@@ -74,4 +74,52 @@ describe("projectsToCSV", () => {
     expect(csv).toContain("My Project");
     expect(csv).toContain("active");
   });
+});
+
+describe("csvToTasks", () => {
+    it("parses a simple CSV", () => {
+        const csv = "project,title\nMy Project,New Task";
+        const { tasks: newTasks, malformedRows } = csvToTasks(csv, projects, []);
+        expect(newTasks.length).toBe(1);
+        expect(newTasks[0].title).toBe("New Task");
+        expect(newTasks[0].projectId).toBe("p1");
+        expect(malformedRows.length).toBe(0);
+    });
+
+    it("skips duplicates", () => {
+        const csv = "project,title\nMy Project,Build feature";
+        const { tasks: newTasks } = csvToTasks(csv, projects, tasks);
+        expect(newTasks.length).toBe(0);
+    });
+
+    it("handles malformed rows", () => {
+        const csv = "project,title\nUnknown Project,Task A\nMy Project,Task B";
+        const { tasks: newTasks, malformedRows } = csvToTasks(csv, projects, []);
+        expect(newTasks.length).toBe(1);
+        expect(newTasks[0].title).toBe("Task B");
+        expect(malformedRows).toEqual([2]);
+    });
+
+    it("handles roundtrip", () => {
+        const csv = tasksToCSV(tasks, projects);
+        const { tasks: newTasks } = csvToTasks(csv, projects, []);
+        expect(newTasks.length).toBe(2);
+        expect(newTasks[0].title).toBe("Build feature");
+        expect(newTasks[1].title).toBe('Task with "quotes"');
+    });
+
+    it("handles BOM, CRLF, and empty lines", () => {
+        const csv = "\uFEFFproject,title\r\nMy Project,Task 1\r\n\r\nMy Project,Task 2";
+        const { tasks: newTasks } = csvToTasks(csv, projects, []);
+        expect(newTasks.length).toBe(2);
+        expect(newTasks[0].title).toBe("Task 1");
+        expect(newTasks[1].title).toBe("Task 2");
+    });
+
+    it("handles quoted commas", () => {
+        const csv = 'project,title,description\nMy Project,Task A,"Description, with comma"';
+        const { tasks: newTasks } = csvToTasks(csv, projects, []);
+        expect(newTasks.length).toBe(1);
+        expect(newTasks[0].description).toBe("Description, with comma");
+    });
 });

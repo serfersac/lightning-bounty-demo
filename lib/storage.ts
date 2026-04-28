@@ -84,6 +84,11 @@ export function saveTask(task: Task): void {
   writeJSON(TASKS_KEY, tasks);
 }
 
+
+export function saveTasks(tasks: Task[]): void {
+  writeJSON(TASKS_KEY, tasks);
+}
+
 export function deleteTask(id: string): void {
   const tasks = getTasks().filter((t) => t.id !== id);
   writeJSON(TASKS_KEY, tasks);
