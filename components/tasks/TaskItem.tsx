@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import type { Task } from "@/lib/types";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { TaskStatusBadge } from "./TaskStatusBadge";
 import { TagBadge } from "@/components/tags/TagBadge";
 
@@ -18,15 +20,60 @@ const priorityDot: Record<string, string> = {
 };
 
 export function TaskItem({ task, projectId, onDelete }: TaskItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 1 : undefined,
+  };
+
   return (
-    <div className="border border-[--border] bg-[--surface] px-4 py-3 flex items-start gap-3 group hover:border-[--accent] transition-colors">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`border border-[--border] bg-[--surface] flex items-start gap-3 group transition-colors relative ${
+        isDragging ? "shadow-lg border-[--accent]" : "hover:border-[--accent]"
+      }`}
+    >
+      <div
+        {...attributes}
+        {...listeners}
+        className="touch-none flex-shrink-0 flex items-center justify-center w-8 h-full cursor-grab active:cursor-grabbing"
+        style={{ height: "auto", alignSelf: "stretch" }}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="text-gray-400"
+        >
+          <circle cx="12" cy="5" r="1" />
+          <circle cx="12" cy="12" r="1" />
+          <circle cx="12" cy="19" r="1" />
+        </svg>
+      </div>
+
       {/* Priority indicator */}
       <span
         className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${priorityDot[task.priority]}`}
         title={`Priority: ${task.priority}`}
         aria-label={`Priority: ${task.priority}`}
       />
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 py-3">
         <div className="flex items-center gap-2 flex-wrap">
           <Link
             href={`/projects/${projectId}/tasks/${task.id}`}
@@ -54,7 +101,7 @@ export function TaskItem({ task, projectId, onDelete }: TaskItemProps) {
       {onDelete && (
         <button
           onClick={() => onDelete(task.id)}
-          className="opacity-0 group-hover:opacity-100 text-[--text-muted] hover:text-red-500 text-xs transition-all"
+          className="opacity-0 group-hover:opacity-100 text-[--text-muted] hover:text-red-500 text-xs transition-all px-4 self-stretch flex items-center"
           aria-label={`Delete task ${task.title}`}
         >
           ✕

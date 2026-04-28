@@ -89,8 +89,29 @@ export function deleteTask(id: string): void {
   writeJSON(TASKS_KEY, tasks);
 }
 
+export function saveTasks(tasksToSave: Task[]): void {
+  const allTasks = getTasks();
+  const taskIdsToSave = new Set(tasksToSave.map((t) => t.id));
+  const otherTasks = allTasks.filter((t) => !taskIdsToSave.has(t.id));
+  writeJSON(TASKS_KEY, [...otherTasks, ...tasksToSave]);
+}
+
+export function reorderTasks(
+  projectId: string,
+  startIndex: number,
+  endIndex: number,
+): Task[] {
+  const projectTasks = getTasks(projectId);
+  const [removed] = projectTasks.splice(startIndex, 1);
+  projectTasks.splice(endIndex, 0, removed);
+  saveTasks(projectTasks);
+  return projectTasks;
+}
+
+
 export function clearAll(): void {
   if (!isBrowser()) return;
+
   localStorage.removeItem(PROJECTS_KEY);
   localStorage.removeItem(TASKS_KEY);
 }
