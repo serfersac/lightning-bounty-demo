@@ -1,15 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import type { Task } from "@/lib/types";
+import type { ListItem, Task } from "@/lib/types";
 import { TaskStatusBadge } from "./TaskStatusBadge";
 import { TagBadge } from "@/components/tags/TagBadge";
 
 interface TaskItemProps {
-  task: Task;
+  task: ListItem<Task>;
   projectId: string;
   onDelete?: (id: string) => void;
+  onToggleSelected?: (id: string) => void;
 }
+
 
 const priorityDot: Record<string, string> = {
   high: "bg-red-500",
@@ -17,9 +19,20 @@ const priorityDot: Record<string, string> = {
   low: "bg-zinc-400",
 };
 
-export function TaskItem({ task, projectId, onDelete }: TaskItemProps) {
+export function TaskItem({ task, projectId, onDelete, onToggleSelected }: TaskItemProps) {
   return (
-    <div className="border border-[--border] bg-[--surface] px-4 py-3 flex items-start gap-3 group hover:border-[--accent] transition-colors">
+    <div
+      className="border border-[--border] bg-[--surface] px-4 py-3 flex items-start gap-3 group hover:border-[--accent] transition-colors"
+      data-selected={task.isSelected}
+    >
+      {onToggleSelected && (
+        <input
+          type="checkbox"
+          checked={task.isSelected}
+          onChange={() => onToggleSelected(task.id)}
+          className="mt-1"
+        />
+      )}
       {/* Priority indicator */}
       <span
         className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${priorityDot[task.priority]}`}

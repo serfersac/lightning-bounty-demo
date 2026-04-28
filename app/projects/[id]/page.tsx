@@ -10,9 +10,18 @@ import { Modal } from "@/components/ui/Modal";
 import { TaskForm } from "@/components/tasks/TaskForm";
 import { Button } from "@/components/ui/Button";
 import { TagBadge } from "@/components/tags/TagBadge";
-import { getProject, getTasks, saveTask, deleteTask, deleteProject } from "@/lib/storage";
+import {
+  getProject,
+  getTasks,
+  saveTask,
+  deleteTask,
+  deleteTasks,
+  markTasksDone,
+  addTaskTag,
+  deleteProject,
+} from "@/lib/storage";
 import { useToast } from "@/components/ui/ToastProvider";
-import type { Project, Task } from "@/lib/types";
+import type { Project, Task, ListItem, Tag } from "@/lib/types";
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -20,7 +29,7 @@ export default function ProjectDetailPage() {
   const { showToast } = useToast();
 
   const [project, setProject] = useState<Project | null>(null);
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<ListItem<Task>[]>([]);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
@@ -45,6 +54,43 @@ export default function ProjectDetailPage() {
     deleteTask(taskId);
     setTasks((prev) => prev.filter((t) => t.id !== taskId));
     showToast("Task deleted", "info");
+  }
+
+  function handleDeleteTasks(taskIds: string[]) {
+    deleteTasks(taskIds);
+    setTasks((prev) => prev.filter((t) => !taskIds.includes(t.id)));
+    showToast(`${taskIds.length} tasks deleted`, "info");
+  }
+
+  function handleMarkTasksDone(taskIds: string[]) {
+    markTasksDone(taskIds);
+    setTasks((prev) =>
+      prev.map((t) => (taskIds.includes(t.id) ? { ...t, status: "done" } : t))
+    );
+    showToast(`${taskIds.length} tasks marked done`, "info");
+  }
+
+  function handleAddTaskTag(taskIds: string[], tag: Tag) {
+    addTaskTag(taskIds, tag);
+    setTasks((prev) =>
+      prev.map((t) =>
+        taskIds.includes(t.id) && !t.tags.some((tg) => tg.id === tag.id)
+          ? { ...t, tags: [...t.tags, tag] }
+          : t
+      )
+    );
+    showToast(`Tag added to ${taskIds.length} tasks`, "info");
+  }
+
+  function handleToggleSelected(taskId: string) {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, isSelected: !t.isSelected } : t))
+    );
+  }
+
+  function handleToggleAllSelected() {
+    const allSelected = tasks.length > 0 && tasks.every((t) => t.isSelected);
+    setTasks((prev) => prev.map((t) => ({ ...t, isSelected: !allSelected })));
   }
 
   function handleDeleteProject() {
@@ -127,7 +173,16 @@ export default function ProjectDetailPage() {
           <h2 className="font-display font-semibold text-[--text] mb-4">
             Tasks ({tasks.length})
           </h2>
-          <TaskList tasks={tasks} projectId={id} onDelete={handleDeleteTask} />
+          <TaskList
+            tasks={tasks}
+            projectId={id}
+            onDelete={handleDeleteTask}
+            onDeleteBulk={handleDeleteTasks}
+            onMarkDoneBulk={handleMarkTasksDone}
+            onAddTagBulk={handleAddTaskTag}
+            onToggleSelected={handleToggleSelected}
+            onToggleAllSelected={handleToggleAllSelected}
+          />
         </div>
       </main>
 

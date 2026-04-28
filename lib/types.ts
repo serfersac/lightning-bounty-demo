@@ -1,3 +1,4 @@
+export type ListItem<T> = T & { isSelected?: boolean };
 export type TaskStatus = "todo" | "in-progress" | "done" | "blocked";
 export type TaskPriority = "low" | "medium" | "high";
 export type ProjectStatus = "active" | "archived" | "completed";

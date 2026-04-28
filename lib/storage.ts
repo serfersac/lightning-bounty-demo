@@ -89,6 +89,33 @@ export function deleteTask(id: string): void {
   writeJSON(TASKS_KEY, tasks);
 }
 
+export function deleteTasks(ids: string[]): void {
+  const tasks = getTasks().filter((t) => !ids.includes(t.id));
+  writeJSON(TASKS_KEY, tasks);
+}
+
+export function markTasksDone(ids: string[]): void {
+  const tasks = getTasks();
+  for (const task of tasks) {
+    if (ids.includes(task.id)) {
+      task.status = "done";
+    }
+  }
+  writeJSON(TASKS_KEY, tasks);
+}
+
+export function addTaskTag(ids: string[], tag: Tag): void {
+  const tasks = getTasks();
+  for (const task of tasks) {
+    if (ids.includes(task.id)) {
+      if (!task.tags.some((t) => t.id === tag.id)) {
+        task.tags.push(tag);
+      }
+    }
+  }
+  writeJSON(TASKS_KEY, tasks);
+}
+
 export function clearAll(): void {
   if (!isBrowser()) return;
   localStorage.removeItem(PROJECTS_KEY);
