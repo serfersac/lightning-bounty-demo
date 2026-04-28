@@ -10,13 +10,13 @@ import {
 import type { Project, Task } from "@/lib/types";
 
 // Integration tests: storage CRUD round-trips that simulate real app flows
-beforeEach(() => {
-  clearAll();
+beforeEach(async () => {
+  await clearAll();
   localStorage.clear();
 });
 
 describe("persistence — project + task lifecycle", () => {
-  it("creates a project, adds tasks, reads them back", () => {
+  it("creates a project, adds tasks, reads them back", async () => {
     const now = new Date().toISOString();
     const project: Project = {
       id: "e2e-proj-1",
@@ -27,7 +27,7 @@ describe("persistence — project + task lifecycle", () => {
       createdAt: now,
       updatedAt: now,
     };
-    saveProject(project);
+    await saveProject(project);
 
     const task: Task = {
       id: "e2e-task-1",
@@ -42,42 +42,67 @@ describe("persistence — project + task lifecycle", () => {
       createdAt: now,
       updatedAt: now,
     };
-    saveTask(task);
+    await saveTask(task);
 
-    const loaded = getProject("e2e-proj-1");
+    const loaded = await getProject("e2e-proj-1");
     expect(loaded?.name).toBe("E2E Project");
 
-    const tasks = getTasks("e2e-proj-1");
+    const tasks = await getTasks("e2e-proj-1");
     expect(tasks).toHaveLength(1);
     expect(tasks[0].title).toBe("First e2e task");
   });
 
-  it("updates a task status (simulates status change)", () => {
+  it("updates a task status (simulates status change)", async () => {
     const now = new Date().toISOString();
-    const project: Project = { id: "ep2", name: "Update Test", description: "", status: "active", tags: [], createdAt: now, updatedAt: now };
-    saveProject(project);
+    const project: Project = {
+      id: "ep2",
+      name: "Update Test",
+      description: "",
+      status: "active",
+      tags: [],
+      createdAt: now,
+      updatedAt: now,
+    };
+    await saveProject(project);
 
-    const task: Task = { id: "et2", projectId: "ep2", title: "Task to update", description: "", status: "todo", priority: "high", tags: [], assignee: "", dueDate: null, createdAt: now, updatedAt: now };
-    saveTask(task);
+    const task: Task = {
+      id: "et2",
+      projectId: "ep2",
+      title: "Task to update",
+      description: "",
+      status: "todo",
+      priority: "high",
+      tags: [],
+      assignee: "",
+      dueDate: null,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await saveTask(task);
 
-    saveTask({ ...task, status: "done", updatedAt: new Date().toISOString() });
+    await saveTask({
+      ...task,
+      status: "done",
+      updatedAt: new Date().toISOString(),
+    });
 
-    const updated = getTasks("ep2").find((t) => t.id === "et2");
+    const tasks = await getTasks("ep2");
+    const updated = tasks.find((t) => t.id === "et2");
     expect(updated?.status).toBe("done");
   });
 
-  it("seed data loads when localStorage is empty", () => {
+  it("seed data loads when localStorage is empty", async () => {
     // clearAll was called in beforeEach, so this is a fresh state
-    const projects = getProjects();
+    const projects = await getProjects();
     expect(projects.length).toBeGreaterThan(0);
-    const tasks = getTasks();
+    const tasks = await getTasks();
     expect(tasks.length).toBeGreaterThan(0);
   });
 
-  it("clearAll wipes all data", () => {
+  it("clearAll wipes all data", async () => {
     // Trigger seeding first
-    getProjects();
-    clearAll();
+    await getProjects();
+    await clearAll();
     localStorage.clear();
     // After clear + localStorage.clear, rawread returns null
     expect(localStorage.getItem("pt_projects")).toBeNull();

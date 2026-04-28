@@ -1,4 +1,8 @@
 import "@testing-library/jest-dom";
+import { IDBFactory } from "fake-indexeddb";
+
+// Mock IndexedDB
+globalThis.indexedDB = new IDBFactory();
 
 // localStorage mock for tests
 const localStorageMock = (() => {
