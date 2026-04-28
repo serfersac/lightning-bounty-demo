@@ -21,9 +21,9 @@ const EmptyState: React.FC = () => {
         ></path>
       </svg>
       <p className="text-lg font-semibold mb-4">You don't have any projects yet.</p>
-      <Link href="/projects/new" passHref>
-        <Button>Create Project</Button>
-      </Link>
+      <Button asChild>
+        <Link href="/projects/new">Create Project</Link>
+      </Button>
     </div>
   );
 };
