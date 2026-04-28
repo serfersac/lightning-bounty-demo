@@ -7,6 +7,7 @@ import { Footer } from "@/components/layout/Footer";
 import { StatsCard } from "@/components/StatsCard";
 import { KeyboardShortcuts } from "@/components/KeyboardShortcuts";
 import { ShortcutsHelp } from "@/components/ShortcutsHelp";
+import EmptyState from "@/components/EmptyState";
 import { getProjects, getTasks } from "@/lib/storage";
 import type { Project, Task } from "@/lib/types";
 
@@ -49,6 +50,8 @@ export default function DashboardPage() {
               <div key={i} className="border border-[--border] p-6 h-28 bg-[--surface] animate-pulse" />
             ))}
           </div>
+        ) : projects.length === 0 ? (
+          <EmptyState />
         ) : (
           <>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 stagger">

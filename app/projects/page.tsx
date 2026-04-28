@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ProjectList } from "@/components/projects/ProjectList";
+import EmptyState from "@/components/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { getProjects, getTasks } from "@/lib/storage";
 import type { Project, Task } from "@/lib/types";
@@ -46,6 +47,8 @@ export default function ProjectsPage() {
               <div key={i} className="border border-[--border] h-40 bg-[--surface] animate-pulse" />
             ))}
           </div>
+        ) : projects.length === 0 ? (
+          <EmptyState />
         ) : (
           <ProjectList projects={projects} tasks={tasks} />
         )}
