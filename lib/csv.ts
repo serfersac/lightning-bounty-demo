@@ -2,7 +2,6 @@ import type { Task, Project } from "./types";
 
 function escapeCell(value: string | null | undefined): string {
   const s = value ?? "";
-  // Wrap in quotes if contains comma, quote, or newline
   if (s.includes(",") || s.includes('"') || s.includes("\n")) {
     return `"${s.replace(/"/g, '""')}"`;
   }
@@ -17,6 +16,7 @@ export function tasksToCSV(tasks: Task[], projects: Project[]): string {
   const projectMap = new Map(projects.map((p) => [p.id, p.name]));
   const headers = [
     "id",
+    "projectId",
     "project",
     "title",
     "description",
@@ -29,12 +29,12 @@ export function tasksToCSV(tasks: Task[], projects: Project[]): string {
     "updatedAt",
   ];
   const lines = [headers.join(",")];
-
   for (const task of tasks) {
     lines.push(
       row([
         task.id,
-        projectMap.get(task.projectId) ?? task.projectId,
+        task.projectId,
+        projectMap.get(task.projectId) ?? "",
         task.title,
         task.description,
         task.status,
@@ -47,14 +47,12 @@ export function tasksToCSV(tasks: Task[], projects: Project[]): string {
       ])
     );
   }
-
   return lines.join("\n");
 }
 
 export function projectsToCSV(projects: Project[]): string {
   const headers = ["id", "name", "description", "status", "tags", "createdAt", "updatedAt"];
   const lines = [headers.join(",")];
-
   for (const p of projects) {
     lines.push(
       row([
@@ -68,32 +66,57 @@ export function projectsToCSV(projects: Project[]): string {
       ])
     );
   }
-
   return lines.join("\n");
 }
 
-function parseCsvRow(line: string): string[] {
-    const values: string[] = [];
-    let current_value = '';
-    let in_quotes = false;
-    for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        if (char === '"') {
-            if (in_quotes && i + 1 < line.length && line[i + 1] === '"') {
-                current_value += '"';
-                i++;
-            } else {
-                in_quotes = !in_quotes;
-            }
-        } else if (char === ',' && !in_quotes) {
-            values.push(current_value);
-            current_value = '';
+function parseCSV(csv: string): string[][] {
+  const rows: string[][] = [];
+  let currentRow: string[] = [];
+  let currentCell = '';
+  let inQuotes = false;
+
+  // Remove BOM
+  if (csv.charCodeAt(0) === 0xFEFF) {
+    csv = csv.substring(1);
+  }
+
+  for (let i = 0; i < csv.length; i++) {
+    const char = csv[i];
+    if (inQuotes) {
+      if (char === '"') {
+        if (i + 1 < csv.length && csv[i + 1] === '"') {
+          currentCell += '"';
+          i++;
         } else {
-            current_value += char;
+          inQuotes = false;
         }
+      } else {
+        currentCell += char;
+      }
+    } else {
+      if (char === '"') {
+        inQuotes = true;
+      } else if (char === ',') {
+        currentRow.push(currentCell);
+        currentCell = '';
+      } else if (char === '\n' || char === '\r') {
+        if (i + 1 < csv.length && csv[i + 1] === '\n') i++; // Handle CRLF
+        currentRow.push(currentCell);
+        rows.push(currentRow);
+        currentRow = [];
+        currentCell = '';
+      } else {
+        currentCell += char;
+      }
     }
-    values.push(current_value);
-    return values;
+  }
+
+  if (currentCell || currentRow.length) {
+    currentRow.push(currentCell);
+    rows.push(currentRow);
+  }
+  
+  return rows;
 }
 
 export function csvToTasks(
@@ -104,33 +127,33 @@ export function csvToTasks(
   tasks: Omit<Task, "id" | "createdAt" | "updatedAt">[];
   malformedRows: number[];
 } {
-  const projectMap = new Map(projects.map((p) => [p.name, p.id]));
+  const projectNameMap = new Map(projects.map((p) => [p.name, p.id]));
+  const projectIdSet = new Set(projects.map((p) => p.id));
   const existingTaskTitles = new Set(
     existingTasks.map((t) => `${t.projectId}:${t.title}`)
   );
 
-  // Remove BOM
-  if (csv.charCodeAt(0) === 0xFEFF) {
-    csv = csv.substring(1);
-  }
-  
-  const lines = csv.split(/\r?\n/);
-  const headers = parseCsvRow(lines[0]).map((h) => h.trim());
+  const rows = parseCSV(csv);
+  if (rows.length < 2) return { tasks: [], malformedRows: [] };
+
+  const headers = rows[0].map((h) => h.trim());
   const tasks: Omit<Task, "id" | "createdAt" | "updatedAt">[] = [];
   const malformedRows: number[] = [];
 
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i];
-    if (line.trim() === "") continue;
+  for (let i = 1; i < rows.length; i++) {
+    const values = rows[i];
+    if (values.length === 1 && values[0] === '') continue; // Skip empty rows
 
-    const values = parseCsvRow(line);
     const rowData: { [key: string]: string } = {};
     for (let j = 0; j < headers.length; j++) {
-      rowData[headers[j]] = values[j];
+      rowData[headers[j]] = values[j] ?? '';
     }
 
-    const projectName = rowData["project"];
-    const projectId = projectMap.get(projectName);
+    let projectId = rowData["projectId"];
+    if (!projectId || !projectIdSet.has(projectId)) {
+      projectId = projectNameMap.get(rowData["project"]);
+    }
+    
     if (!projectId) {
       malformedRows.push(i + 1);
       continue;
@@ -155,7 +178,7 @@ export function csvToTasks(
           .map((name) => ({ id: "", name, color: "" })),
         dueDate: rowData["dueDate"] || null,
       });
-      existingTaskTitles.add(`${projectId}:${title}`); // Add to set to handle duplicates within the CSV
+      existingTaskTitles.add(`${projectId}:${title}`);
     } catch (e) {
       malformedRows.push(i + 1);
     }

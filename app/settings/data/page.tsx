@@ -42,29 +42,42 @@ export default function DataPage() {
 
     const reader = new FileReader();
     reader.onload = (e) => {
-      const csv = e.target?.result as string;
-      const projects = getProjects();
-      const existingTasks = getTasks();
-      const { tasks: newTasks, malformedRows } = csvToTasks(csv, projects, existingTasks);
-      
-      if (newTasks.length > 0) {
-        const currentTasks = getTasks();
-        saveTasks([...currentTasks, ...newTasks.map(t => ({...t, id: crypto.randomUUID(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()}))]);
-        showToast(`${newTasks.length} tasks imported successfully`, "success");
+      try {
+        const csv = e.target?.result as string;
+        if (!csv) {
+          showToast("Could not read file", "error");
+          return;
+        }
+
+        const projects = getProjects();
+        const existingTasks = getTasks();
+        const { tasks: newTasks, malformedRows } = csvToTasks(csv, projects, existingTasks);
+        
+        if (newTasks.length > 0) {
+          const currentTasks = getTasks();
+          saveTasks([...currentTasks, ...newTasks.map(t => ({...t, id: crypto.randomUUID(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()}))]);
+          showToast(`${newTasks.length} tasks imported successfully`, "success");
+        }
+        
+        if (malformedRows.length > 0) {
+          showToast(`Skipped ${malformedRows.length} malformed or duplicate rows`, "warning");
+        }
+        
+        if (newTasks.length === 0 && malformedRows.length === 0) {
+          showToast("No new tasks to import", "info");
+        }
+      } catch (error) {
+        showToast("Failed to parse CSV file", "error");
+        console.error(error);
+      } finally {
+        // Reset file input
+        if(fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
       }
-      
-      if (malformedRows.length > 0) {
-        showToast(`Skipped ${malformedRows.length} malformed or duplicate rows`, "warning");
-      }
-      
-      if (newTasks.length === 0 && malformedRows.length === 0) {
-        showToast("No new tasks to import", "info");
-      }
-      
-      // Reset file input
-      if(fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+    };
+    reader.onerror = () => {
+      showToast("Error reading file", "error");
     };
     reader.readAsText(file);
   }

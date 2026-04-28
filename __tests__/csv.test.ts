@@ -39,7 +39,7 @@ describe("tasksToCSV", () => {
   it("starts with correct headers", () => {
     const csv = tasksToCSV(tasks, projects);
     const firstLine = csv.split("\n")[0];
-    expect(firstLine).toBe("id,project,title,description,status,priority,assignee,tags,dueDate,createdAt,updatedAt");
+    expect(firstLine).toBe("id,projectId,project,title,description,status,priority,assignee,tags,dueDate,createdAt,updatedAt");
   });
 
   it("includes task data", () => {
@@ -78,7 +78,7 @@ describe("projectsToCSV", () => {
 
 describe("csvToTasks", () => {
     it("parses a simple CSV", () => {
-        const csv = "project,title\nMy Project,New Task";
+        const csv = "projectId,title\np1,New Task";
         const { tasks: newTasks, malformedRows } = csvToTasks(csv, projects, []);
         expect(newTasks.length).toBe(1);
         expect(newTasks[0].title).toBe("New Task");
@@ -87,13 +87,13 @@ describe("csvToTasks", () => {
     });
 
     it("skips duplicates", () => {
-        const csv = "project,title\nMy Project,Build feature";
+        const csv = "projectId,title\np1,Build feature";
         const { tasks: newTasks } = csvToTasks(csv, projects, tasks);
         expect(newTasks.length).toBe(0);
     });
 
     it("handles malformed rows", () => {
-        const csv = "project,title\nUnknown Project,Task A\nMy Project,Task B";
+        const csv = "projectId,title\np99,Task A\np1,Task B";
         const { tasks: newTasks, malformedRows } = csvToTasks(csv, projects, []);
         expect(newTasks.length).toBe(1);
         expect(newTasks[0].title).toBe("Task B");
@@ -109,7 +109,7 @@ describe("csvToTasks", () => {
     });
 
     it("handles BOM, CRLF, and empty lines", () => {
-        const csv = "\uFEFFproject,title\r\nMy Project,Task 1\r\n\r\nMy Project,Task 2";
+        const csv = "\uFEFFprojectId,title\r\np1,Task 1\r\n\r\np1,Task 2";
         const { tasks: newTasks } = csvToTasks(csv, projects, []);
         expect(newTasks.length).toBe(2);
         expect(newTasks[0].title).toBe("Task 1");
@@ -117,9 +117,16 @@ describe("csvToTasks", () => {
     });
 
     it("handles quoted commas", () => {
-        const csv = 'project,title,description\nMy Project,Task A,"Description, with comma"';
+        const csv = 'projectId,title,description\np1,Task A,"Description, with comma"';
         const { tasks: newTasks } = csvToTasks(csv, projects, []);
         expect(newTasks.length).toBe(1);
         expect(newTasks[0].description).toBe("Description, with comma");
+    });
+
+    it("handles quoted multiline fields", () => {
+        const csv = 'projectId,title,description\np1,Task A,"Line 1\nLine 2"';
+        const { tasks: newTasks } = csvToTasks(csv, projects, []);
+        expect(newTasks.length).toBe(1);
+        expect(newTasks[0].description).toBe("Line 1\nLine 2");
     });
 });
