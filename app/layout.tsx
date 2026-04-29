@@ -20,6 +20,7 @@ export default function RootLayout({
         <SkipLink />
         <ToastProvider>
           <AuthGuard>{children}</AuthGuard>
+          <KeyboardShortcuts />
         </ToastProvider>
       </body>
     </html>
