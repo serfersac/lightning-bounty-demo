@@ -51,11 +51,28 @@ export default function DashboardPage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 stagger">
-              <StatsCard label="Total Projects" value={projects.length} />
-              <StatsCard label="Active" value={activeProjects} accent />
-              <StatsCard label="In Progress" value={inProgress} />
-              <StatsCard label="Blocked" value={blockedTasks} />
+            <div className="mb-8">
+              {/* Progress Bar for Completed Tasks */}
+              {tasks.length > 0 && (
+                <div className="mb-6">
+                  <h2 className="font-display font-semibold text-[--text] mb-2">Task Completion</h2>
+                  <div className="h-6 bg-[--border] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[--accent] transition-all duration-700 flex items-center justify-center text-white text-xs font-bold"
+                      style={{ width: `${(doneTasks / tasks.length) * 100}%` }}
+                    >
+                      {`${Math.round((doneTasks / tasks.length) * 100)}% Completed`}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {/* Existing Stats Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 stagger">
+                <StatsCard label="Total Projects" value={projects.length} />
+                <StatsCard label="Active" value={activeProjects} accent />
+                <StatsCard label="In Progress" value={inProgress} />
+                <StatsCard label="Blocked" value={blockedTasks} />
+              </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
