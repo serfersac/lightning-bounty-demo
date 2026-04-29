@@ -3,6 +3,7 @@ import "./globals.css";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { SkipLink } from "@/components/ui/SkipLink";
 import { AuthGuard } from "@/components/AuthGuard";
+import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
 
 export const metadata: Metadata = {
   title: "Project Tracker",
@@ -20,6 +21,7 @@ export default function RootLayout({
         <SkipLink />
         <ToastProvider>
           <AuthGuard>{children}</AuthGuard>
+          <ServiceWorkerRegistration />
         </ToastProvider>
       </body>
     </html>
