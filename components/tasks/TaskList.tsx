@@ -7,6 +7,7 @@ import { searchTasks } from "@/lib/search";
 import { filterTasks } from "@/lib/filters";
 import { sortTasks } from "@/lib/sort";
 import { SearchBar } from "@/components/ui/SearchBar";
+import { Select } from "@/components/ui/Select";
 
 interface TaskListProps {
   tasks: Task[];
@@ -16,7 +17,13 @@ interface TaskListProps {
 
 export function TaskList({ tasks, projectId, onDelete }: TaskListProps) {
   const [search, setSearch] = useState("");
-  const [sortConfig] = useState<SortConfig>({ field: "status", direction: "asc" });
+  const [sortMethod, setSortMethod] = useState<"newest" | "highest-bounty">("newest");
+  const sortConfig: SortConfig = useMemo(() => {
+    if (sortMethod === "highest-bounty") {
+      return { field: "bounty", direction: "desc" };
+    }
+    return { field: "createdAt", direction: "desc" };
+  }, [sortMethod]);
   const [filterConfig] = useState<FilterConfig>({});
 
   const visible = useMemo(() => {
@@ -38,12 +45,22 @@ export function TaskList({ tasks, projectId, onDelete }: TaskListProps) {
 
   return (
     <div className="space-y-3">
-      <SearchBar
-        value={search}
-        onChange={setSearch}
-        placeholder="Search tasks..."
-        className="max-w-xs"
-      />
+      <div className="flex justify-between items-center">
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+          placeholder="Search tasks..."
+          className="max-w-xs"
+        />
+        <Select
+          value={sortMethod}
+          onChange={(e) => setSortMethod(e.target.value as "newest" | "highest-bounty")}
+          className="w-40"
+        >
+          <option value="newest">Newest First</option>
+          <option value="highest-bounty">Highest Bounty</option>
+        </Select>
+      </div>
       {visible.length === 0 ? (
         <p className="font-mono text-sm text-[--text-muted] py-4">No tasks match your search</p>
       ) : (
