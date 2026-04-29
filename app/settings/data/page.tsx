@@ -7,8 +7,8 @@ import { tasksToCSV, projectsToCSV } from "@/lib/csv";
 import { useToast } from "@/components/ui/ToastProvider";
 import { useRouter } from "next/navigation";
 
-function downloadCSV(content: string, filename: string) {
-  const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
+function downloadFile(content: string, filename: string, contentType: string) {
+  const blob = new Blob([content], { type: contentType });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -24,13 +24,30 @@ export default function DataPage() {
 
   function handleExportTasks() {
     const { projects, tasks } = exportRaw();
-    downloadCSV(tasksToCSV(tasks, projects), "project-tracker-tasks.csv");
+    downloadFile(
+      tasksToCSV(tasks, projects),
+      "project-tracker-tasks.csv",
+      "text/csv;charset=utf-8;"
+    );
     showToast("Tasks exported as CSV", "success");
   }
 
+  function handleExportJSON() {
+    const data = exportRaw();
+    downloadFile(
+      JSON.stringify(data, null, 2),
+      "lightning_backup.json",
+      "application/json"
+    );
+    showToast("All data exported as JSON", "success");
+  }
   function handleExportProjects() {
     const { projects } = exportRaw();
-    downloadCSV(projectsToCSV(projects), "project-tracker-projects.csv");
+    downloadFile(
+      projectsToCSV(projects),
+      "project-tracker-projects.csv",
+      "text/csv;charset=utf-8;"
+    );
     showToast("Projects exported as CSV", "success");
   }
 
@@ -61,10 +78,10 @@ export default function DataPage() {
           </div>
           <div className="flex items-center justify-between border-t border-[--border] pt-3">
             <div>
-              <p className="text-sm font-medium text-[--text]">Export projects as CSV</p>
-              <p className="text-xs text-[--text-muted]">All projects with metadata</p>
+              <p className="text-sm font-medium text-[--text]">Export JSON backup</p>
+              <p className="text-xs text-[--text-muted]">A single file with all data</p>
             </div>
-            <Button variant="secondary" size="sm" onClick={handleExportProjects} aria-label="Export projects CSV">
+            <Button variant="secondary" size="sm" onClick={handleExportJSON} aria-label="Export JSON backup">
               Export
             </Button>
           </div>
