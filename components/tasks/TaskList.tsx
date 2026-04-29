@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import type { Task, SortConfig, FilterConfig } from "@/lib/types";
 import { TaskItem } from "./TaskItem";
-import { searchTasks } from "@/lib/search";
+import { searchTasks } from "../../lib/search";
 import { filterTasks } from "@/lib/filters";
 import { sortTasks } from "@/lib/sort";
 import { SearchBar } from "@/components/ui/SearchBar";
@@ -16,8 +16,8 @@ interface TaskListProps {
 
 export function TaskList({ tasks, projectId, onDelete }: TaskListProps) {
   const [search, setSearch] = useState("");
-  const [sortConfig] = useState<SortConfig>({ field: "status", direction: "asc" });
-  const [filterConfig] = useState<FilterConfig>({});
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ field: "status", direction: "asc" });
+  const [filterConfig, setFilterConfig] = useState<FilterConfig>({});
 
   const visible = useMemo(() => {
     let result = tasks;
