@@ -10,6 +10,7 @@ import { Modal } from "@/components/ui/Modal";
 import { TaskForm } from "@/components/tasks/TaskForm";
 import { Button } from "@/components/ui/Button";
 import { TagBadge } from "@/components/tags/TagBadge";
+import { ClipboardIcon } from "@heroicons/react/20/solid";
 import { getProject, getTasks, saveTask, deleteTask, deleteProject } from "@/lib/storage";
 import { useToast } from "@/components/ui/ToastProvider";
 import type { Project, Task } from "@/lib/types";
@@ -55,6 +56,12 @@ export default function ProjectDetailPage() {
     router.push("/projects");
   }
 
+  function handleCopyRepoUrl() {
+    if (!project?.repoUrl) return;
+    navigator.clipboard.writeText(project.repoUrl);
+    showToast("Repo URL copied!", "success");
+  }
+
   if (!loaded) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -97,6 +104,17 @@ export default function ProjectDetailPage() {
               <span className="font-mono text-xs border border-[--border] px-2 py-0.5 text-[--text-muted]">
                 {project.status}
               </span>
+              {project.repoUrl && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleCopyRepoUrl}
+                  aria-label="Copy repository URL"
+                  title="Copy repository URL"
+                >
+                  <ClipboardIcon className="h-4 w-4" />
+                </Button>
+              )}
             </div>
             <p className="text-sm text-[--text-muted] mb-2">{project.description}</p>
             <div className="flex flex-wrap gap-1">
