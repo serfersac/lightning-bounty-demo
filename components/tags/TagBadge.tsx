@@ -8,8 +8,8 @@ interface TagBadgeProps {
 export function TagBadge({ tag, onRemove }: TagBadgeProps) {
   return (
     <span
-      className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono border"
-      style={{ borderColor: tag.color, color: tag.color }}
+      className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-mono border rounded-full text-white"
+      style={{ borderColor: tag.color, backgroundColor: tag.color }}
     >
       {tag.name}
       {onRemove && (
