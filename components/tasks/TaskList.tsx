@@ -12,9 +12,10 @@ interface TaskListProps {
   tasks: Task[];
   projectId: string;
   onDelete?: (id: string) => void;
+  onUpdateTaskStatus?: (id: string, newStatus: Task["status"]) => void;
 }
 
-export function TaskList({ tasks, projectId, onDelete }: TaskListProps) {
+export function TaskList({ tasks, projectId, onDelete, onUpdateTaskStatus }: TaskListProps) {
   const [search, setSearch] = useState("");
   const [sortConfig] = useState<SortConfig>({ field: "status", direction: "asc" });
   const [filterConfig] = useState<FilterConfig>({});
@@ -54,6 +55,7 @@ export function TaskList({ tasks, projectId, onDelete }: TaskListProps) {
               task={task}
               projectId={projectId}
               onDelete={onDelete}
+              onUpdateStatus={onUpdateTaskStatus}
             />
           ))}
         </div>

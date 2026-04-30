@@ -41,6 +41,19 @@ export default function ProjectDetailPage() {
     showToast("Task created", "success");
   }
 
+  function handleUpdateTaskStatus(taskId: string, newStatus: Task["status"]) {
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === taskId ? { ...task, status: newStatus, updatedAt: new Date().toISOString() } : task
+      )
+    );
+    const updatedTask = tasks.find((task) => task.id === taskId);
+    if (updatedTask) {
+      saveTask({ ...updatedTask, status: newStatus, updatedAt: new Date().toISOString() });
+      showToast("Task status updated", "success");
+    }
+  }
+
   function handleDeleteTask(taskId: string) {
     deleteTask(taskId);
     setTasks((prev) => prev.filter((t) => t.id !== taskId));
@@ -127,7 +140,12 @@ export default function ProjectDetailPage() {
           <h2 className="font-display font-semibold text-[--text] mb-4">
             Tasks ({tasks.length})
           </h2>
-          <TaskList tasks={tasks} projectId={id} onDelete={handleDeleteTask} />
+          <TaskList
+            tasks={tasks}
+            projectId={id}
+            onDelete={handleDeleteTask}
+            onUpdateTaskStatus={handleUpdateTaskStatus}
+          />
         </div>
       </main>
 
