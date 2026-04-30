@@ -35,6 +35,22 @@ export function TaskItem({ task, projectId, onDelete }: TaskItemProps) {
             {task.title}
           </Link>
           <TaskStatusBadge status={task.status} />
+          {task.dueDate && (
+            <span
+              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                new Date(task.dueDate).getTime() - Date.now() > 5 * 24 * 60 * 60 * 1000
+                  ? "bg-green-100 text-green-800"
+                  : new Date(task.dueDate).getTime() - Date.now() < 24 * 60 * 60 * 1000
+                  ? "bg-red-100 text-red-800"
+                  : "bg-yellow-100 text-yellow-800"
+              }`}
+            >
+              {Math.ceil(
+                (new Date(task.dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+              )}{" "}
+              Days Remaining
+            </span>
+          )}
         </div>
         {task.description && (
           <p className="mt-0.5 text-xs text-[--text-muted] line-clamp-1">{task.description}</p>
