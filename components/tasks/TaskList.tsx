@@ -3,18 +3,22 @@
 import { useState, useMemo } from "react";
 import type { Task, SortConfig, FilterConfig } from "@/lib/types";
 import { TaskItem } from "./TaskItem";
+import { TaskSkeleton } from "./TaskSkeleton";
 import { searchTasks } from "@/lib/search";
 import { filterTasks } from "@/lib/filters";
 import { sortTasks } from "@/lib/sort";
 import { SearchBar } from "@/components/ui/SearchBar";
 
+import { TaskSkeleton } from "./TaskSkeleton";
+
 interface TaskListProps {
   tasks: Task[];
   projectId: string;
+  isLoading: boolean;
   onDelete?: (id: string) => void;
 }
 
-export function TaskList({ tasks, projectId, onDelete }: TaskListProps) {
+export function TaskList({ tasks, projectId, isLoading, onDelete }: TaskListProps) {
   const [search, setSearch] = useState("");
   const [sortConfig] = useState<SortConfig>({ field: "status", direction: "asc" });
   const [filterConfig] = useState<FilterConfig>({});
@@ -26,6 +30,25 @@ export function TaskList({ tasks, projectId, onDelete }: TaskListProps) {
     result = sortTasks(result, sortConfig);
     return result;
   }, [tasks, search, filterConfig, sortConfig]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+          placeholder="Search tasks..."
+          className="max-w-xs"
+          disabled
+        />
+        <div className="space-y-1">
+          {[...Array(3)].map((_, i) => (
+            <TaskSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (tasks.length === 0) {
     return (

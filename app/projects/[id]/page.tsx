@@ -127,7 +127,7 @@ export default function ProjectDetailPage() {
           <h2 className="font-display font-semibold text-[--text] mb-4">
             Tasks ({tasks.length})
           </h2>
-          <TaskList tasks={tasks} projectId={id} onDelete={handleDeleteTask} />
+          <TaskList tasks={tasks} projectId={id} onDelete={handleDeleteTask} isLoading={!loaded} />
         </div>
       </main>
 
